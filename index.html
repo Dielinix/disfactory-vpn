@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>DISFACTORY VPN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Космический холст и атмосферные слои -->
+  <canvas id="spaceCanvas"></canvas>
+  <div class="cosmic-vignette"></div>
+  <div class="nebula-core" id="nebulaCore"></div>
+  <div class="nebula-halo"></div>
+
+  <main class="app">
+    <!-- Верхняя панель -->
+    <header class="header anim-stagger" style="--stagger: 1">
+      <div class="brand">
+        <div class="brand-emblem">
+          <span class="emblem-ring"></span>
+          <span class="emblem-core"></span>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">DISFACTORY</span>
+          <span class="brand-tag">DEEP SPACE TUNNEL</span>
+        </div>
+      </div>
+
+      <button class="protocol-pill" id="protocolBtn" title="Сменить протокол">
+        <span class="protocol-dot"></span>
+        <span id="protocolLabel">VLESS • REALITY</span>
+      </button>
+    </header>
+
+    <!-- Блок статуса и таймера -->
+    <section class="telemetry-header anim-stagger" style="--stagger: 2">
+      <div class="status-badge" id="statusBadge">
+        <span class="status-pulse"></span>
+        <span id="statusText">ОЖИДАНИЕ КАНАЛА</span>
+      </div>
+
+      <div class="timer-wrap">
+        <div class="timer" id="timer">00:00:00</div>
+      </div>
+
+      <div class="ip-chip">
+        <span class="ip-prefix">NODE</span>
+        <span class="ip-value" id="ipLabel">185.220.101.4 • UNSECURED</span>
+      </div>
+    </section>
+
+    <!-- Центральный орбитальный реактор -->
+    <section class="reactor-stage anim-stagger" style="--stagger: 3">
+      <div class="reactor" id="reactor">
+        <!-- Двойная ударная волна -->
+        <div class="shockwave wave-1" id="wave1"></div>
+        <div class="shockwave wave-2" id="wave2"></div>
+
+        <!-- Радарный луч при подключении -->
+        <div class="radar-sweep"></div>
+
+        <!-- Внешняя градуированная шкала -->
+        <svg class="reactor-svg outer-scale" viewBox="0 0 260 260">
+          <circle cx="130" cy="130" r="124" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1 7" />
+          <circle cx="130" cy="130" r="116" fill="none" stroke="currentColor" stroke-width="0.75" stroke-dasharray="40 20 8 20" opacity="0.5" />
+        </svg>
+
+        <!-- Эллиптическая орбита -->
+        <div class="ellipse-orbit"></div>
+
+        <!-- Среднее кольцо со спутником -->
+        <div class="orbit-track track-mid">
+          <span class="orbiter orbiter-alpha"></span>
+        </div>
+
+        <!-- Внутреннее кольцо со спутником -->
+        <div class="orbit-track track-inner">
+          <span class="orbiter orbiter-beta"></span>
+        </div>
+
+        <!-- Металлическая стеклянная кнопка питания -->
+        <button class="power-core" id="powerBtn" aria-label="Активировать DISFACTORY VPN">
+          <span class="core-rim"></span>
+          <span class="core-specular"></span>
+          <svg class="power-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+
+      <p class="reactor-hint" id="powerHint">Коснитесь ядра для шифрования</p>
+    </section>
+
+    <!-- Нижний кластер: Телеметрия + Локация -->
+    <div class="bottom-cluster">
+      <!-- Карточка скорости с живой волной -->
+      <section class="glass-panel telemetry-panel anim-stagger" style="--stagger: 4">
+        <div class="speed-columns">
+          <div class="speed-item">
+            <div class="speed-meta">
+              <span class="arrow-icon">↓</span>
+              <span>ПРИЁМ</span>
+            </div>
+            <div class="speed-readout">
+              <span id="downSpeed">0.0</span>
+              <small>МБ/с</small>
+            </div>
+          </div>
+
+          <div class="panel-divider"></div>
+
+          <div class="speed-item">
+            <div class="speed-meta">
+              <span class="arrow-icon">↑</span>
+              <span>ПЕРЕДАЧА</span>
+            </div>
+            <div class="speed-readout">
+              <span id="upSpeed">0.0</span>
+              <small>МБ/с</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Живой осциллограф трафика -->
+        <div class="wave-container">
+          <canvas id="trafficWave"></canvas>
+        </div>
+      </section>
+
+      <!-- Кнопка выбора орбитального узла -->
+      <button class="glass-panel server-trigger anim-stagger" style="--stagger: 5" id="openServersBtn">
+        <div class="server-left">
+          <div class="flag-box">
+            <span class="flag-emoji" id="currentFlag">🇳🇱</span>
+          </div>
+          <div class="server-meta">
+            <div class="server-title-row">
+              <span class="server-country" id="currentCountry">Нидерланды</span>
+              <span class="node-tag" id="currentNodeTag">NL-01</span>
+            </div>
+            <span class="server-city" id="currentCity">Амстердам • Квантовый шлюз</span>
+          </div>
+        </div>
+
+        <div class="server-right">
+          <div class="ping-pill">
+            <span class="signal-bars">
+              <i></i><i></i><i></i>
+            </span>
+            <span id="currentPing">24 ms</span>
+          </div>
+          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </button>
+    </div>
+  </main>
+
+  <!-- Выдвижная шторка выбора локации -->
+  <div class="sheet-backdrop" id="sheetOverlay"></div>
+  <aside class="location-sheet" id="bottomSheet">
+    <div class="sheet-drag-bar"></div>
+    <div class="sheet-top">
+      <div>
+        <h2>ОРБИТАЛЬНЫЕ УЗЛЫ</h2>
+        <p>Выберите точку маршрутизации трафика</p>
+      </div>
+      <button class="sheet-close" id="closeSheetBtn" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="server-list" id="serverList"></div>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>
