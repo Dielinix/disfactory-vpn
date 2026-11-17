@@ -1,0 +1,49 @@
+name: Build DISFACTORY VPN APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Prepare web assets
+        run: |
+          mkdir -p www
+          cp index.html style.css app.js www/
+
+      - name: Initialize Capacitor and Android platform
+        run: |
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.disfactory.vpn",appName:"DISFACTORY VPN",webDir:"www",backgroundColor:"#020203"},null,2))'
+          npx cap add android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DISFACTORY-VPN-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
