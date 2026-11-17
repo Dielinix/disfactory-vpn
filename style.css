@@ -1,0 +1,892 @@
+:root {
+  --void: #020203;
+  --obsidian: #0a0a0d;
+  --glass-bg: rgba(16, 16, 21, 0.58);
+  --glass-bg-active: rgba(26, 26, 34, 0.78);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(255, 255, 255, 0.32);
+  --nova: #ffffff;
+  --starlight: #e4e4e7;
+  --titanium: #8e8e98;
+  --graphite: #3f3f46;
+
+  --font-display: 'Syncopate', sans-serif;
+  --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  background-color: var(--void);
+  color: var(--nova);
+  font-family: var(--font-ui);
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+/* === ФОНОВЫЕ СЛОИ КОСМОСА === */
+#spaceCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Мягкое затемнение по краям экрана (фейд в бездну) */
+.cosmic-vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, transparent 35%, rgba(2, 2, 3, 0.88) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Глубокая туманность за ядром */
+.nebula-core {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.055) 0%, rgba(160, 160, 175, 0.02) 45%, transparent 72%);
+  filter: blur(18px);
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1), background 1.2s ease;
+}
+
+.nebula-halo {
+  position: fixed;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 460px;
+  height: 240px;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.045) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+body.connecting .nebula-core {
+  transform: translate(-50%, -50%) scale(1.22);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(180, 180, 195, 0.04) 50%, transparent 74%);
+}
+
+body.connected .nebula-core {
+  transform: translate(-50%, -50%) scale(1.45);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.19) 0%, rgba(210, 210, 225, 0.06) 46%, transparent 74%);
+}
+
+/* === ОСНОВНОЙ КОНТЕЙНЕР === */
+.app {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  height: 100dvh;
+  padding: calc(16px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Каскадное появление элементов при открытии */
+.anim-stagger {
+  opacity: 0;
+  transform: translateY(18px) scale(0.98);
+  animation: cosmicReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--stagger, 1) * 0.08s);
+}
+
+@keyframes cosmicReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === ШАПКА === */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.brand-emblem {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+}
+
+.emblem-ring {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  animation: rotateSlow 14s linear infinite;
+}
+
+.emblem-core {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nova);
+  box-shadow: 0 0 10px var(--nova);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--nova);
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
+}
+
+.brand-tag {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.6px;
+  color: var(--titanium);
+  margin-top: 2px;
+}
+
+.protocol-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
+  color: var(--starlight);
+  background: var(--glass-bg);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 7px 12px;
+  border-radius: 99px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.15s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.protocol-pill:active {
+  transform: scale(0.94);
+  border-color: var(--border-glow);
+}
+
+.protocol-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--nova);
+  box-shadow: 0 0 8px var(--nova);
+}
+
+/* === ТЕЛЕМЕТРИЯ И ТАЙМЕР === */
+.telemetry-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.015) 100%);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--titanium);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: all 0.45s ease;
+}
+
+.status-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--titanium);
+  transition: all 0.4s ease;
+}
+
+body.connecting .status-badge {
+  color: var(--starlight);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+body.connecting .status-pulse {
+  background: var(--nova);
+  animation: pulseDot 0.45s infinite alternate;
+}
+
+body.connected .status-badge {
+  color: var(--nova);
+  border-color: var(--border-glow);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+body.connected .status-pulse {
+  background: var(--nova);
+  box-shadow: 0 0 10px var(--nova), 0 0 20px var(--nova);
+}
+
+@keyframes pulseDot {
+  from { opacity: 0.2; transform: scale(0.75); }
+  to { opacity: 1; transform: scale(1.25); }
+}
+
+.timer {
+  font-family: var(--font-mono);
+  font-size: clamp(34px, 9vw, 44px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 3px;
+  background: linear-gradient(180deg, #ffffff 25%, #8e8e98 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.8));
+  transition: filter 0.6s ease;
+}
+
+body.connected .timer {
+  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.35));
+}
+
+.ip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--titanium);
+}
+
+.ip-prefix {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--starlight);
+}
+
+body.connected .ip-value {
+  color: var(--starlight);
+}
+
+/* === ЦЕНТРАЛЬНЫЙ ОРБИТАЛЬНЫЙ РЕАКТОР === */
+.reactor-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.reactor {
+  position: relative;
+  width: clamp(210px, 29dvh, 254px);
+  height: clamp(210px, 29dvh, 254px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Двойная ударная волна */
+.shockwave {
+  position: absolute;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shockwave.active.wave-1 {
+  animation: waveBlast 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.shockwave.active.wave-2 {
+  animation: waveBlast 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.14s forwards;
+}
+
+@keyframes waveBlast {
+  0% { transform: scale(0.95); opacity: 0.85; }
+  100% { transform: scale(2.25); opacity: 0; }
+}
+
+/* Радарный конус при подключении */
+.radar-sweep {
+  position: absolute;
+  width: 88%;
+  height: 88%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0.28) 0deg, rgba(255, 255, 255, 0.04) 55deg, transparent 90deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  animation: rotateSlow 2.2s linear infinite;
+}
+
+body.connecting .radar-sweep {
+  opacity: 1;
+}
+
+/* Внешняя SVG-шкала */
+.reactor-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.2);
+  animation: rotateSlow 42s linear infinite;
+  pointer-events: none;
+  transition: color 0.6s ease;
+}
+
+body.connected .reactor-svg {
+  color: rgba(255, 255, 255, 0.42);
+  animation-duration: 20s;
+}
+
+/* Эллиптическая 3D-орбита */
+.ellipse-orbit {
+  position: absolute;
+  width: 96%;
+  height: 46%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: rotate(-24deg);
+  pointer-events: none;
+  transition: border-color 0.6s ease, box-shadow 0.6s ease;
+}
+
+body.connected .ellipse-orbit {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+}
+
+/* Орбитальные треки со спутниками */
+.orbit-track {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  pointer-events: none;
+  transition: border-color 0.5s ease;
+}
+
+.track-mid {
+  width: 78%;
+  height: 78%;
+  animation: rotateSlow 15s linear infinite reverse;
+}
+
+.track-inner {
+  width: 62%;
+  height: 62%;
+  border-color: rgba(255, 255, 255, 0.16);
+  animation: rotateSlow 9s linear infinite;
+}
+
+body.connecting .track-mid {
+  animation-duration: 2s;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.connecting .track-inner {
+  animation-duration: 1.4s;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.connected .track-mid {
+  border-color: rgba(255, 255, 255, 0.26);
+  animation-duration: 8s;
+}
+
+body.connected .track-inner {
+  border-color: rgba(255, 255, 255, 0.42);
+  animation-duration: 5s;
+}
+
+.orbiter {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--nova);
+  box-shadow: 0 0 10px var(--nova), 0 0 22px rgba(255, 255, 255, 0.8);
+}
+
+.orbiter-alpha {
+  width: 5px;
+  height: 5px;
+  top: -2.5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.orbiter-beta {
+  width: 4px;
+  height: 4px;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Центральная кнопка питания */
+.power-core {
+  position: relative;
+  width: 114px;
+  height: 114px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle at 32% 24%, #26262e 0%, #101014 62%, #070709 100%);
+  color: var(--starlight);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 22px 45px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 2px 3px rgba(255, 255, 255, 0.25),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.8);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+}
+
+.power-core:active {
+  transform: scale(0.9);
+}
+
+/* Вращающийся металлический ободок */
+.core-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 1.5px;
+  background: conic-gradient(from 0deg, rgba(255,255,255,0.65), rgba(255,255,255,0.05) 35%, rgba(255,255,255,0.45) 65%, rgba(255,255,255,0.05));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: rotateSlow 6s linear infinite;
+  pointer-events: none;
+}
+
+/* Стеклянный блик */
+.core-specular {
+  position: absolute;
+  top: -35%;
+  left: -35%;
+  width: 170%;
+  height: 170%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 38%, transparent 50%);
+  pointer-events: none;
+}
+
+.power-glyph {
+  width: 38px;
+  height: 38px;
+  z-index: 1;
+  transition: color 0.4s ease, filter 0.4s ease, transform 0.4s ease;
+}
+
+body.connected .power-core {
+  background: radial-gradient(circle at 35% 28%, #363642 0%, #15151b 65%, #09090c 100%);
+  box-shadow:
+    0 0 46px rgba(255, 255, 255, 0.32),
+    0 0 90px rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.75),
+    inset 0 2px 4px rgba(255, 255, 255, 0.55);
+  animation: novaBreathe 3s ease-in-out infinite;
+}
+
+body.connected .power-glyph {
+  color: var(--nova);
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+}
+
+@keyframes novaBreathe {
+  0%, 100% {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.65), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 64px rgba(255, 255, 255, 0.48), 0 0 0 1px rgba(255, 255, 255, 0.95), inset 0 2px 5px rgba(255, 255, 255, 0.75);
+  }
+}
+
+.reactor-hint {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--titanium);
+}
+
+/* === НИЖНИЙ КЛАСТЕР КАРТОЧЕК (LIQUID GLASS) === */
+.bottom-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.glass-panel {
+  position: relative;
+  background: linear-gradient(165deg, rgba(24, 24, 31, 0.72) 0%, rgba(11, 11, 15, 0.78) 100%);
+  border: 1px solid var(--border-subtle);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Карточка телеметрии с живым графиком */
+.telemetry-panel {
+  border-radius: 20px;
+  padding: 13px 16px 10px;
+  overflow: hidden;
+}
+
+.speed-columns {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.speed-item {
+  flex: 1;
+}
+
+.speed-item:last-child {
+  padding-left: 16px;
+}
+
+.panel-divider {
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+}
+
+.speed-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  color: var(--titanium);
+  margin-bottom: 3px;
+}
+
+.arrow-icon {
+  color: var(--nova);
+  font-weight: 700;
+}
+
+.speed-readout {
+  font-family: var(--font-mono);
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--nova);
+}
+
+.speed-readout small {
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--titanium);
+}
+
+/* Осциллограф трафика */
+.wave-container {
+  margin-top: 8px;
+  height: 24px;
+  width: 100%;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+
+#trafficWave {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Кнопка выбора сервера */
+.server-trigger {
+  width: 100%;
+  border-radius: 20px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--nova);
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
+}
+
+.server-trigger:active {
+  transform: scale(0.975);
+  border-color: var(--border-glow);
+  background: var(--glass-bg-active);
+}
+
+.server-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.flag-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.flag-emoji {
+  font-size: 22px;
+  filter: grayscale(15%) contrast(1.05);
+}
+
+.server-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.server-title-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.server-country {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--nova);
+}
+
+.node-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--starlight);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.server-city {
+  font-size: 11px;
+  color: var(--titanium);
+}
+
+.server-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ping-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--nova);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  padding: 5px 9px;
+  border-radius: 9px;
+}
+
+.signal-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 10px;
+}
+
+.signal-bars i {
+  display: block;
+  width: 2px;
+  background: var(--nova);
+  border-radius: 1px;
+}
+
+.signal-bars i:nth-child(1) { height: 4px; }
+.signal-bars i:nth-child(2) { height: 7px; }
+.signal-bars i:nth-child(3) { height: 10px; }
+
+.chevron-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--titanium);
+}
+
+/* === ВЫДВИЖНАЯ ШТОРКА ЛОКАЦИЙ === */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.76);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 10;
+}
+
+.sheet-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.location-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(180deg, #131318 0%, #09090c 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 28px 28px 0 0;
+  padding: 12px 20px calc(26px + env(safe-area-inset-bottom));
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 11;
+}
+
+.location-sheet.open {
+  transform: translate(-50%, 0);
+}
+
+.sheet-drag-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+  margin: 0 auto 16px;
+}
+
+.sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sheet-top h2 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  color: var(--nova);
+}
+
+.sheet-top p {
+  font-size: 11.5px;
+  color: var(--titanium);
+  margin-top: 3px;
+}
+
+.sheet-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--starlight);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.server-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 54dvh;
+  overflow-y: auto;
+}
+
+.server-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--nova);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: itemSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 0.045s);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+@keyframes itemSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.server-option.active {
+  border-color: rgba(255, 255, 255, 0.65);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.03) 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
