@@ -54,6 +54,8 @@ jobs:
           const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
           const path = require('path');
           const fs = require('fs');
+          const os = require('os');
+          const crypto = require('crypto');
           const net = require('net');
           const http = require('http');
           const https = require('https');
@@ -64,6 +66,17 @@ jobs:
           function getBinDir() {
             const prodBin = path.join(process.resourcesPath, 'bin');
             return fs.existsSync(prodBin) ? prodBin : path.join(__dirname, 'bin');
+          }
+
+          function getDeviceHwid() {
+            const hwidFile = path.join(app.getPath('userData'), 'device-hwid.txt');
+            if (fs.existsSync(hwidFile)) {
+              return fs.readFileSync(hwidFile, 'utf8').trim();
+            }
+            const raw = [os.hostname(), os.platform(), os.arch(), (os.cpus()[0] || {}).model || 'cpu'].join('|');
+            const hwid = crypto.createHash('sha256').update(raw).digest('hex').slice(0, 32);
+            fs.writeFileSync(hwidFile, hwid, 'utf8');
+            return hwid;
           }
 
           function buildSingBoxConfig(uri) {
@@ -138,6 +151,43 @@ jobs:
                   server_name: sni,
                   utls: { enabled: true, fingerprint: fp }
                 }
+              };
+            } else if (trimmed.startsWith('ss://')) {
+              const withoutHash = trimmed.split('#')[0];
+              const rawBody = withoutHash.slice(5);
+              let method = '';
+              let password = '';
+              let port = 443;
+
+              if (rawBody.includes('@')) {
+                const [userPart, hostPart] = rawBody.split('@');
+                const decodedUser = Buffer.from(userPart, 'base64').toString('utf8');
+                const sep = decodedUser.indexOf(':');
+                method = decodedUser.slice(0, sep);
+                password = decodedUser.slice(sep + 1);
+                const lastColon = hostPart.lastIndexOf(':');
+                serverHost = hostPart.slice(0, lastColon);
+                port = parseInt(hostPart.slice(lastColon + 1), 10) || 443;
+              } else {
+                const decodedFull = Buffer.from(rawBody, 'base64').toString('utf8');
+                const atIdx = decodedFull.lastIndexOf('@');
+                const userPart = decodedFull.slice(0, atIdx);
+                const hostPart = decodedFull.slice(atIdx + 1);
+                const sep = userPart.indexOf(':');
+                method = userPart.slice(0, sep);
+                password = userPart.slice(sep + 1);
+                const lastColon = hostPart.lastIndexOf(':');
+                serverHost = hostPart.slice(0, lastColon);
+                port = parseInt(hostPart.slice(lastColon + 1), 10) || 443;
+              }
+
+              outbound = {
+                type: 'shadowsocks',
+                tag: 'proxy-out',
+                server: serverHost,
+                server_port: port,
+                method,
+                password
               };
             } else if (trimmed.includes('[Interface]') && trimmed.includes('[Peer]')) {
               const data = {};
@@ -295,17 +345,71 @@ jobs:
             });
           });
 
-          ipcMain.handle('vpn:fetchSub', async (_event, { url }) => {
+          function fetchWithRedirects(targetUrl, customHeaders, redirectsLeft = 5) {
             return new Promise((resolve, reject) => {
-              const client = url.startsWith('https') ? https : http;
-              const req = client.get(url, { headers: { 'User-Agent': 'Happ/2.0 DISFACTORY-VPN/1.0' } }, (res) => {
+              const client = targetUrl.startsWith('https') ? https : http;
+              const req = client.get(targetUrl, { headers: customHeaders }, (res) => {
+                if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && redirectsLeft > 0) {
+                  const nextUrl = new URL(res.headers.location, targetUrl).toString();
+                  res.resume();
+                  resolve(fetchWithRedirects(nextUrl, customHeaders, redirectsLeft - 1));
+                  return;
+                }
                 let data = '';
                 res.on('data', chunk => { data += chunk; });
                 res.on('end', () => resolve({ body: data, headers: res.headers }));
               });
               req.on('error', (err) => reject(err));
-              req.setTimeout(8000, () => { req.destroy(); reject(new Error('Таймаут подписки')); });
+              req.setTimeout(9000, () => { req.destroy(); reject(new Error('Таймаут подписки')); });
             });
+          }
+
+          function isStubResponse(bodyText) {
+            let decoded = (bodyText || '').trim();
+            if (!decoded) return true;
+            if (!decoded.includes('://')) {
+              try {
+                decoded = Buffer.from(decoded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+              } catch (_) {}
+            }
+            return decoded.includes('@0.0.0.0:1') || decoded.includes('@127.0.0.1:1');
+          }
+
+          ipcMain.handle('vpn:fetchSub', async (_event, { url }) => {
+            const hwid = getDeviceHwid();
+            const profiles = [
+              {
+                'User-Agent': 'Happ/2.6.1',
+                'x-hwid': hwid,
+                'x-device-os': 'Windows',
+                'x-ver-os': os.release(),
+                'x-device-model': 'Desktop PC',
+                'Accept': '*/*'
+              },
+              {
+                'User-Agent': 'v2rayNG/1.9.15',
+                'Accept': '*/*'
+              },
+              {
+                'User-Agent': 'HiddifyNext/2.5.7 (windows)',
+                'x-hwid': hwid,
+                'Accept': '*/*'
+              }
+            ];
+
+            let lastResult = null;
+            for (const headers of profiles) {
+              try {
+                const res = await fetchWithRedirects(url, headers);
+                lastResult = res;
+                if (!isStubResponse(res.body)) {
+                  return res;
+                }
+              } catch (_) {}
+            }
+
+            if (lastResult) return lastResult;
+            throw new Error('Не удалось загрузить подписку');
           });
 
           ipcMain.handle('vpn:clipboard', () => clipboard.readText());
