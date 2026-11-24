@@ -218,7 +218,7 @@ function renderWave() {
   const height = waveCanvas.height / Math.min(window.devicePixelRatio || 1, 2);
   wCtx.clearRect(0, 0, width, height);
 
-  waveAmplitude += (targetWaveAmplitude - waveAmplitude) * 0.06;
+  waveAmplitude += (targetWaveAmplitude - waveAmplitude) * 0.08;
   wavePhase += 0.08;
 
   const midY = height / 2;
@@ -286,7 +286,7 @@ function scrambleText(element, finalText, duration = 420) {
   requestAnimationFrame(update);
 }
 
-/* === 5. ЛОГИКА DISFACTORY VPN И РЕАЛЬНЫЙ МОСТ WIREGUARD === */
+/* === 5. ЛОГИКА DISFACTORY VPN И РЕАЛЬНЫЙ ТРАФИК WIREGUARD === */
 const protocols = ['WIREGUARD • WARP', 'VLESS • REALITY', 'HYSTERIA 2'];
 let protocolIndex = 0;
 
@@ -340,6 +340,11 @@ let timerInterval = null;
 let trafficInterval = null;
 let connectTimeout = null;
 
+// Состояние счётчиков реального трафика
+let lastRxBytes = null;
+let lastTxBytes = null;
+let lastStatsTime = 0;
+
 const body = document.body;
 const powerBtn = document.getElementById('powerBtn');
 const wave1 = document.getElementById('wave1');
@@ -349,7 +354,9 @@ const timerEl = document.getElementById('timer');
 const ipLabel = document.getElementById('ipLabel');
 const powerHint = document.getElementById('powerHint');
 const downSpeed = document.getElementById('downSpeed');
+const downUnit = document.getElementById('downUnit');
 const upSpeed = document.getElementById('upSpeed');
+const upUnit = document.getElementById('upUnit');
 const protocolBtn = document.getElementById('protocolBtn');
 const protocolLabel = document.getElementById('protocolLabel');
 
@@ -384,6 +391,20 @@ function formatTime(totalSec) {
   return `${hrs}:${mins}:${secs}`;
 }
 
+function formatSpeed(bytesPerSec) {
+  if (bytesPerSec >= 1024 * 1024) {
+    return {
+      value: (bytesPerSec / (1024 * 1024)).toFixed(1),
+      unit: 'МБ/с'
+    };
+  }
+  const kb = bytesPerSec / 1024;
+  return {
+    value: kb >= 100 ? kb.toFixed(0) : kb.toFixed(1),
+    unit: 'КБ/с'
+  };
+}
+
 function startTelemetry() {
   stopTelemetry();
   timerInterval = setInterval(() => {
@@ -391,22 +412,73 @@ function startTelemetry() {
     timerEl.textContent = formatTime(seconds);
   }, 1000);
 
-  trafficInterval = setInterval(() => {
-    const down = (Math.random() * 22 + 5.4).toFixed(1);
-    const up = (Math.random() * 6.8 + 1.2).toFixed(1);
-    downSpeed.textContent = down;
-    upSpeed.textContent = up;
-    targetWaveAmplitude = 4 + Math.random() * 5.5;
-  }, 950);
+  const vpnPlugin = getNativeVpnPlugin();
+
+  if (vpnPlugin && typeof vpnPlugin.getTrafficStats === 'function') {
+    // Реальный опрос трафика из ядра WireGuard Android
+    trafficInterval = setInterval(async () => {
+      try {
+        const stats = await vpnPlugin.getTrafficStats();
+        const now = performance.now();
+
+        if (lastRxBytes === null || lastTxBytes === null) {
+          lastRxBytes = stats.rxBytes;
+          lastTxBytes = stats.txBytes;
+          lastStatsTime = now;
+          return;
+        }
+
+        const dt = Math.max((now - lastStatsTime) / 1000, 0.2);
+        const rxSpeed = Math.max(0, stats.rxBytes - lastRxBytes) / dt;
+        const txSpeed = Math.max(0, stats.txBytes - lastTxBytes) / dt;
+
+        lastRxBytes = stats.rxBytes;
+        lastTxBytes = stats.txBytes;
+        lastStatsTime = now;
+
+        const rxFormatted = formatSpeed(rxSpeed);
+        const txFormatted = formatSpeed(txSpeed);
+
+        downSpeed.textContent = rxFormatted.value;
+        downUnit.textContent = rxFormatted.unit;
+        upSpeed.textContent = txFormatted.value;
+        upUnit.textContent = txFormatted.unit;
+
+        // Амплитуда волны зависит от реальной нагрузки сети
+        const totalKB = (rxSpeed + txSpeed) / 1024;
+        targetWaveAmplitude = totalKB < 1
+          ? 1.6
+          : Math.min(11, 2 + Math.log10(totalKB + 1) * 2.8);
+      } catch (err) {
+        console.warn('Traffic stats read error:', err);
+      }
+    }, 1000);
+  } else {
+    // Резервная симуляция только для веб-предпросмотра в редакторе
+    trafficInterval = setInterval(() => {
+      const down = (Math.random() * 16 + 3.2).toFixed(1);
+      const up = (Math.random() * 4.5 + 0.8).toFixed(1);
+      downSpeed.textContent = down;
+      downUnit.textContent = 'МБ/с';
+      upSpeed.textContent = up;
+      upUnit.textContent = 'МБ/с';
+      targetWaveAmplitude = 4 + Math.random() * 5;
+    }, 1000);
+  }
 }
 
 function stopTelemetry() {
   clearInterval(timerInterval);
   clearInterval(trafficInterval);
   seconds = 0;
+  lastRxBytes = null;
+  lastTxBytes = null;
+  lastStatsTime = 0;
   timerEl.textContent = '00:00:00';
   downSpeed.textContent = '0.0';
+  downUnit.textContent = 'КБ/с';
   upSpeed.textContent = '0.0';
+  upUnit.textContent = 'КБ/с';
   targetWaveAmplitude = 1.5;
 }
 
@@ -469,7 +541,6 @@ async function startConnecting() {
       await setDisconnected('Не удалось поднять туннель (проверь разрешение VPN)');
     }
   } else {
-    // Режим предпросмотра в браузере / редакторе
     connectTimeout = setTimeout(() => {
       applyConnectedUI();
     }, 1250);
