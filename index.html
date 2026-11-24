@@ -6,7 +6,7 @@
   <title>DISFACTORY VPN</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syncopate:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -16,6 +16,7 @@
   <div class="nebula-halo"></div>
 
   <main class="app">
+    <!-- Шапка с кнопкой добавления ключа (+) -->
     <header class="header anim-stagger" style="--stagger: 1">
       <div class="brand">
         <div class="brand-emblem">
@@ -28,12 +29,21 @@
         </div>
       </div>
 
-      <button class="protocol-pill" id="protocolBtn" title="Протокол туннеля">
-        <span class="protocol-dot"></span>
-        <span id="protocolLabel">WIREGUARD • WARP</span>
-      </button>
+      <div class="header-actions">
+        <div class="protocol-pill" id="protocolBadge">
+          <span class="protocol-dot"></span>
+          <span id="protocolLabel">NO KEY</span>
+        </div>
+        <button class="add-key-btn" id="openAddModalBtn" title="Добавить ключ или подписку" aria-label="Добавить ключ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </header>
 
+    <!-- Статус и таймер -->
     <section class="telemetry-header anim-stagger" style="--stagger: 2">
       <div class="status-badge" id="statusBadge">
         <span class="status-pulse"></span>
@@ -46,10 +56,11 @@
 
       <div class="ip-chip">
         <span class="ip-prefix">NODE</span>
-        <span class="ip-value" id="ipLabel">172.16.0.2 • WARP STANDBY</span>
+        <span class="ip-value" id="ipLabel">ДОБАВЬТЕ КЛЮЧ ДОСТУПА</span>
       </div>
     </section>
 
+    <!-- Центральный орбитальный реактор -->
     <section class="reactor-stage anim-stagger" style="--stagger: 3">
       <div class="reactor" id="reactor">
         <div class="shockwave wave-1" id="wave1"></div>
@@ -81,9 +92,10 @@
         </button>
       </div>
 
-      <p class="reactor-hint" id="powerHint">Коснитесь ядра для запуска WARP</p>
+      <p class="reactor-hint" id="powerHint">Нажмите + чтобы вставить ключ или подписку</p>
     </section>
 
+    <!-- Нижний кластер: Скорость + Выбор узла -->
     <div class="bottom-cluster">
       <section class="glass-panel telemetry-panel anim-stagger" style="--stagger: 4">
         <div class="speed-columns">
@@ -120,23 +132,23 @@
       <button class="glass-panel server-trigger anim-stagger" style="--stagger: 5" id="openServersBtn">
         <div class="server-left">
           <div class="flag-box">
-            <span class="flag-emoji" id="currentFlag">☁️</span>
+            <span class="flag-emoji" id="currentFlag">＋</span>
           </div>
           <div class="server-meta">
             <div class="server-title-row">
-              <span class="server-country" id="currentCountry">Cloudflare WARP</span>
-              <span class="node-tag" id="currentNodeTag">WARP-01</span>
+              <span class="server-country" id="currentCountry">Нет активного сервера</span>
+              <span class="node-tag" id="currentNodeTag" style="display: none;">VLESS</span>
             </div>
-            <span class="server-city" id="currentCity">Anycast • Активный конфиг</span>
+            <span class="server-city" id="currentCity">Нажмите, чтобы добавить ключ или подписку</span>
           </div>
         </div>
 
         <div class="server-right">
-          <div class="ping-pill">
-            <span class="signal-bars">
+          <div class="ping-pill" id="currentPingPill" style="display: none;">
+            <span class="signal-bars" id="currentSignalBars">
               <i></i><i></i><i></i>
             </span>
-            <span id="currentPing">18 ms</span>
+            <span id="currentPing">-- ms</span>
           </div>
           <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -146,18 +158,80 @@
     </div>
   </main>
 
+  <!-- Шторка серверов и подписок (Happ-style) -->
   <div class="sheet-backdrop" id="sheetOverlay"></div>
   <aside class="location-sheet" id="bottomSheet">
     <div class="sheet-drag-bar"></div>
     <div class="sheet-top">
       <div>
-        <h2>ОРБИТАЛЬНЫЕ УЗЛЫ</h2>
-        <p>Выберите точку маршрутизации трафика</p>
+        <h2>СЕРВЕРЫ И ПОДПИСКИ</h2>
+        <p id="serverCountLabel">0 активных конфигураций</p>
       </div>
-      <button class="sheet-close" id="closeSheetBtn" aria-label="Закрыть">✕</button>
+      <div class="sheet-actions">
+        <button class="icon-action-btn" id="pingAllBtn" title="Проверить пинг всех серверов">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>Пинг</span>
+        </button>
+        <button class="icon-action-btn" id="updateSubsBtn" title="Обновить подписку" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <button class="icon-action-btn primary" id="sheetAddBtn" title="Добавить ключ">
+          <span>＋</span>
+        </button>
+        <button class="sheet-close" id="closeSheetBtn" aria-label="Закрыть">✕</button>
+      </div>
     </div>
+
+    <!-- Карточка информации о подписке (как в Happ) -->
+    <div class="sub-info-card" id="subInfoCard" style="display: none;">
+      <div class="sub-info-top">
+        <div class="sub-title-group">
+          <span class="sub-badge">SUBSCRIPTION</span>
+          <span class="sub-name" id="subProfileName">DISFACTORY PASS</span>
+        </div>
+        <button class="sub-delete-btn" id="deleteSubBtn" title="Удалить подписку">Удалить</button>
+      </div>
+      <div class="sub-stats-row">
+        <span id="subTrafficText">Трафик: ∞</span>
+        <span id="subExpireText">Срок: ∞</span>
+      </div>
+    </div>
+
     <div class="server-list" id="serverList"></div>
   </aside>
+
+  <!-- Модальное окно добавления ключа / подписки (Happ-style) -->
+  <div class="modal-backdrop" id="addModalOverlay"></div>
+  <div class="add-modal" id="addModal">
+    <div class="modal-header">
+      <div>
+        <h3>ДОБАВИТЬ ДОСТУП</h3>
+        <p>Подписка https://, vless://, trojan:// или WireGuard</p>
+      </div>
+      <button class="sheet-close" id="closeAddModalBtn">✕</button>
+    </div>
+
+    <button class="clipboard-btn" id="pasteClipboardBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span>ВСТАВИТЬ ИЗ БУФЕРА ОБМЕНА</span>
+    </button>
+
+    <div class="modal-divider"><span>ИЛИ ВВЕДИТЕ ВРУЧНУЮ</span></div>
+
+    <textarea class="key-input" id="manualKeyInput" rows="4" placeholder="Вставьте ссылку подписки (https://...) или один/несколько ключей vless://, trojan://..."></textarea>
+
+    <div class="modal-status" id="addModalStatus"></div>
+
+    <button class="confirm-add-btn" id="confirmAddBtn">ДОБАВИТЬ В СПИСОК</button>
+  </div>
 
   <script src="app.js"></script>
 </body>
