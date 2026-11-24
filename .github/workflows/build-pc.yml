@@ -18,14 +18,206 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Create Electron wrapper and config
+      - name: Download sing-box and Wintun binaries for Windows
         shell: bash
         run: |
+          mkdir -p bin
+          curl -L -o sing-box.zip "https://github.com/SagerNet/sing-box/releases/download/v1.10.7/sing-box-1.10.7-windows-amd64.zip"
+          powershell -NoProfile -Command "Expand-Archive -Path sing-box.zip -DestinationPath sb_tmp -Force"
+          cp sb_tmp/*/sing-box.exe bin/
+
+          curl -L -o wintun.zip "https://www.wintun.net/builds/wintun-0.14.1.zip"
+          powershell -NoProfile -Command "Expand-Archive -Path wintun.zip -DestinationPath wt_tmp -Force"
+          cp wt_tmp/wintun/bin/amd64/wintun.dll bin/
+
+      - name: Prepare icon and Electron VPN wrapper
+        shell: bash
+        run: |
+          mkdir -p build
+          pip install pillow
+          python -c "import os; from PIL import Image; src = 'icon.png' if os.path.exists('icon.png') else ('icon.jpg' if os.path.exists('icon.jpg') else ''); img = Image.open(src).convert('RGBA').resize((512, 512)) if src else None; img.save('build/icon.png') if img else None; img.save('icon.png') if img else None"
+
+          cat << 'EOF' > preload.js
+          const { contextBridge, ipcRenderer } = require('electron');
+
+          contextBridge.exposeInMainWorld('disfactoryDesktopVpn', {
+            connect: (payload) => ipcRenderer.invoke('vpn:connect', payload),
+            disconnect: () => ipcRenderer.invoke('vpn:disconnect'),
+            getTrafficStats: () => ipcRenderer.invoke('vpn:stats')
+          });
+          EOF
+
           cat << 'EOF' > main.js
-          const { app, BrowserWindow } = require('electron');
+          const { app, BrowserWindow, ipcMain } = require('electron');
           const path = require('path');
+          const fs = require('fs');
+          const http = require('http');
+          const { spawn } = require('child_process');
+
+          let vpnProcess = null;
+
+          function getBinDir() {
+            const prodBin = path.join(process.resourcesPath, 'bin');
+            return fs.existsSync(prodBin) ? prodBin : path.join(__dirname, 'bin');
+          }
+
+          function parseWireguardIni(iniText) {
+            const data = {};
+            iniText.split(/\r?\n/).forEach(line => {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed.startsWith('[') || trimmed.startsWith('#')) return;
+              const idx = trimmed.indexOf('=');
+              if (idx > -1) {
+                const key = trimmed.slice(0, idx).trim();
+                const val = trimmed.slice(idx + 1).trim();
+                data[key] = val;
+              }
+            });
+
+            const addresses = (data.Address || '172.16.0.2/32').split(',').map(s => s.trim()).filter(Boolean);
+            const ipv4 = addresses.find(a => !a.includes(':')) || '172.16.0.2/32';
+            const ipv6 = addresses.find(a => a.includes(':')) || '2606:4700:110:86e5:46de:6cb7:bde:2bd3/128';
+
+            const endpoint = data.Endpoint || 'engage.cloudflareclient.com:2408';
+            const lastColon = endpoint.lastIndexOf(':');
+            const server = endpoint.slice(0, lastColon);
+            const serverPort = parseInt(endpoint.slice(lastColon + 1), 10) || 2408;
+
+            return {
+              log: { level: 'warn' },
+              experimental: {
+                clash_api: {
+                  external_controller: '127.0.0.1:19090'
+                }
+              },
+              dns: {
+                servers: [
+                  { tag: 'cf-dns', address: '1.1.1.1', detour: 'warp-out' }
+                ]
+              },
+              inbounds: [
+                {
+                  type: 'tun',
+                  tag: 'tun-in',
+                  interface_name: 'disfactory-tun',
+                  inet4_address: ipv4,
+                  inet6_address: ipv6,
+                  mtu: parseInt(data.MTU || '1280', 10),
+                  auto_route: true,
+                  strict_route: true,
+                  stack: 'gvisor',
+                  sniff: true
+                }
+              ],
+              outbounds: [
+                {
+                  type: 'wireguard',
+                  tag: 'warp-out',
+                  server,
+                  server_port: serverPort,
+                  local_address: addresses,
+                  private_key: data.PrivateKey,
+                  peer_public_key: data.PublicKey,
+                  mtu: parseInt(data.MTU || '1280', 10)
+                },
+                { type: 'direct', tag: 'direct' },
+                { type: 'dns', tag: 'dns-out' }
+              ],
+              route: {
+                rules: [
+                  { protocol: 'dns', outbound: 'dns-out' },
+                  { domain: [server], outbound: 'direct' },
+                  { ip_is_private: true, outbound: 'direct' }
+                ],
+                auto_detect_interface: true,
+                final: 'warp-out'
+              }
+            };
+          }
+
+          function stopVpnProcess() {
+            if (vpnProcess) {
+              try {
+                vpnProcess.kill();
+              } catch (_) {}
+              vpnProcess = null;
+            }
+          }
+
+          ipcMain.handle('vpn:connect', async (_event, { config }) => {
+            stopVpnProcess();
+            const binDir = getBinDir();
+            const singBoxExe = path.join(binDir, 'sing-box.exe');
+            const configPath = path.join(app.getPath('userData'), 'disfactory-warp.json');
+
+            const sbConfig = parseWireguardIni(config);
+            fs.writeFileSync(configPath, JSON.stringify(sbConfig, null, 2), 'utf8');
+
+            return new Promise((resolve, reject) => {
+              let settled = false;
+              let stderrLog = '';
+
+              const child = spawn(singBoxExe, ['run', '-c', configPath], {
+                cwd: binDir,
+                windowsHide: true
+              });
+
+              vpnProcess = child;
+
+              child.stderr.on('data', chunk => {
+                stderrLog += chunk.toString();
+              });
+
+              child.on('exit', code => {
+                if (!settled) {
+                  settled = true;
+                  vpnProcess = null;
+                  reject(new Error(stderrLog || `sing-box exited with code ${code}`));
+                }
+              });
+
+              setTimeout(() => {
+                if (!settled) {
+                  settled = true;
+                  resolve({ connected: true });
+                }
+              }, 950);
+            });
+          });
+
+          ipcMain.handle('vpn:disconnect', async () => {
+            stopVpnProcess();
+            return { connected: false };
+          });
+
+          ipcMain.handle('vpn:stats', async () => {
+            if (!vpnProcess) return { rxBytes: 0, txBytes: 0 };
+            return new Promise((resolve) => {
+              const req = http.get('http://127.0.0.1:19090/connections', (res) => {
+                let raw = '';
+                res.on('data', chunk => { raw += chunk; });
+                res.on('end', () => {
+                  try {
+                    const parsed = JSON.parse(raw);
+                    resolve({
+                      rxBytes: parsed.downloadTotal || 0,
+                      txBytes: parsed.uploadTotal || 0
+                    });
+                  } catch (_) {
+                    resolve({ rxBytes: 0, txBytes: 0 });
+                  }
+                });
+              });
+              req.on('error', () => resolve({ rxBytes: 0, txBytes: 0 }));
+              req.setTimeout(500, () => {
+                req.destroy();
+                resolve({ rxBytes: 0, txBytes: 0 });
+              });
+            });
+          });
 
           function createWindow() {
+            const iconPath = path.join(__dirname, 'icon.png');
             const win = new BrowserWindow({
               width: 430,
               height: 800,
@@ -34,7 +226,9 @@ jobs:
               autoHideMenuBar: true,
               backgroundColor: '#020203',
               title: 'DISFACTORY VPN',
+              icon: fs.existsSync(iconPath) ? iconPath : undefined,
               webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
                 nodeIntegration: false,
                 contextIsolation: true
               }
@@ -44,8 +238,9 @@ jobs:
           }
 
           app.whenReady().then(createWindow);
-
+          app.on('before-quit', stopVpnProcess);
           app.on('window-all-closed', () => {
+            stopVpnProcess();
             if (process.platform !== 'darwin') app.quit();
           });
           EOF
@@ -61,12 +256,21 @@ jobs:
               "productName": "DISFACTORY VPN",
               "files": [
                 "main.js",
+                "preload.js",
                 "index.html",
                 "style.css",
-                "app.js"
+                "app.js",
+                "icon.png"
+              ],
+              "extraResources": [
+                {
+                  "from": "bin",
+                  "to": "bin"
+                }
               ],
               "win": {
-                "target": "portable"
+                "target": "portable",
+                "requestedExecutionLevel": "requireAdministrator"
               }
             }
           }
