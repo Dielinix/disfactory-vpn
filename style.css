@@ -4,15 +4,15 @@
   --glass-bg: rgba(16, 16, 21, 0.58);
   --glass-bg-active: rgba(26, 26, 34, 0.78);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(255, 255, 255, 0.32);
+  --border-glow: rgba(255, 255, 255, 0.34);
   --nova: #ffffff;
   --starlight: #e4e4e7;
   --titanium: #8e8e98;
   --graphite: #3f3f46;
 
-  --font-display: 'Syncopate', sans-serif;
-  --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Syncopate', -apple-system, sans-serif;
+  --font-ui: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
 * {
@@ -43,7 +43,6 @@ body {
   pointer-events: none;
 }
 
-/* Мягкое затемнение по краям экрана (фейд в бездну) */
 .cosmic-vignette {
   position: fixed;
   inset: 0;
@@ -52,7 +51,6 @@ body {
   z-index: 1;
 }
 
-/* Глубокая туманность за ядром */
 .nebula-core {
   position: fixed;
   top: 40%;
@@ -103,12 +101,11 @@ body.connected .nebula-core {
   justify-content: space-between;
 }
 
-/* Каскадное появление элементов при открытии */
 .anim-stagger {
   opacity: 0;
-  transform: translateY(18px) scale(0.98);
-  animation: cosmicReveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: calc(var(--stagger, 1) * 0.08s);
+  transform: translateY(14px) scale(0.985);
+  animation: cosmicReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--stagger, 1) * 0.05s);
 }
 
 @keyframes cosmicReveal {
@@ -123,12 +120,13 @@ body.connected .nebula-core {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
 }
 
 .brand-emblem {
@@ -142,6 +140,7 @@ body.connected .nebula-core {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+  flex-shrink: 0;
 }
 
 .emblem-ring {
@@ -167,44 +166,43 @@ body.connected .nebula-core {
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1.8px;
   color: var(--nova);
   text-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
 }
 
 .brand-tag {
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  letter-spacing: 1.6px;
+  font-size: 8px;
+  letter-spacing: 1.4px;
   color: var(--titanium);
   margin-top: 2px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .protocol-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 500;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   color: var(--starlight);
   background: var(--glass-bg);
   border: 1px solid var(--border-subtle);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  padding: 7px 12px;
+  padding: 7px 10px;
   border-radius: 99px;
-  cursor: pointer;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transition: transform 0.15s ease, border-color 0.3s ease, background 0.3s ease;
-}
-
-.protocol-pill:active {
-  transform: scale(0.94);
-  border-color: var(--border-glow);
 }
 
 .protocol-dot {
@@ -213,6 +211,31 @@ body.connected .nebula-core {
   border-radius: 50%;
   background: var(--nova);
   box-shadow: 0 0 8px var(--nova);
+}
+
+.add-key-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.16), rgba(255,255,255,0.04));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: var(--nova);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.15s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.add-key-btn:active {
+  transform: scale(0.9);
+  border-color: var(--nova);
+}
+
+.add-key-btn svg {
+  width: 15px;
+  height: 15px;
 }
 
 /* === ТЕЛЕМЕТРИЯ И ТАЙМЕР === */
@@ -299,6 +322,7 @@ body.connected .timer {
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--titanium);
+  max-width: 100%;
 }
 
 .ip-prefix {
@@ -309,6 +333,12 @@ body.connected .timer {
   font-size: 9px;
   letter-spacing: 1px;
   color: var(--starlight);
+}
+
+.ip-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 body.connected .ip-value {
@@ -325,18 +355,17 @@ body.connected .ip-value {
 
 .reactor {
   position: relative;
-  width: clamp(210px, 29dvh, 254px);
-  height: clamp(210px, 29dvh, 254px);
+  width: clamp(205px, 28dvh, 248px);
+  height: clamp(205px, 28dvh, 248px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Двойная ударная волна */
 .shockwave {
   position: absolute;
-  width: 116px;
-  height: 116px;
+  width: 114px;
+  height: 114px;
   border-radius: 50%;
   border: 1.5px solid rgba(255, 255, 255, 0.8);
   opacity: 0;
@@ -356,7 +385,6 @@ body.connected .ip-value {
   100% { transform: scale(2.25); opacity: 0; }
 }
 
-/* Радарный конус при подключении */
 .radar-sweep {
   position: absolute;
   width: 88%;
@@ -373,7 +401,6 @@ body.connecting .radar-sweep {
   opacity: 1;
 }
 
-/* Внешняя SVG-шкала */
 .reactor-svg {
   position: absolute;
   inset: 0;
@@ -390,7 +417,6 @@ body.connected .reactor-svg {
   animation-duration: 20s;
 }
 
-/* Эллиптическая 3D-орбита */
 .ellipse-orbit {
   position: absolute;
   width: 96%;
@@ -407,7 +433,6 @@ body.connected .ellipse-orbit {
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
 }
 
-/* Орбитальные треки со спутниками */
 .orbit-track {
   position: absolute;
   border-radius: 50%;
@@ -477,11 +502,10 @@ body.connected .track-inner {
   to { transform: rotate(360deg); }
 }
 
-/* Центральная кнопка питания */
 .power-core {
   position: relative;
-  width: 114px;
-  height: 114px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   border: none;
   background: radial-gradient(circle at 32% 24%, #26262e 0%, #101014 62%, #070709 100%);
@@ -503,7 +527,6 @@ body.connected .track-inner {
   transform: scale(0.9);
 }
 
-/* Вращающийся металлический ободок */
 .core-rim {
   position: absolute;
   inset: 0;
@@ -517,7 +540,6 @@ body.connected .track-inner {
   pointer-events: none;
 }
 
-/* Стеклянный блик */
 .core-specular {
   position: absolute;
   top: -35%;
@@ -564,6 +586,7 @@ body.connected .power-glyph {
   font-weight: 500;
   letter-spacing: 0.3px;
   color: var(--titanium);
+  text-align: center;
 }
 
 /* === НИЖНИЙ КЛАСТЕР КАРТОЧЕК (LIQUID GLASS) === */
@@ -584,7 +607,6 @@ body.connected .power-glyph {
     inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
 }
 
-/* Карточка телеметрии с живым графиком */
 .telemetry-panel {
   border-radius: 20px;
   padding: 13px 16px 10px;
@@ -641,10 +663,9 @@ body.connected .power-glyph {
   color: var(--titanium);
 }
 
-/* Осциллограф трафика */
 .wave-container {
   margin-top: 8px;
-  height: 24px;
+  height: 22px;
   width: 100%;
   mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
@@ -656,7 +677,6 @@ body.connected .power-glyph {
   display: block;
 }
 
-/* Кнопка выбора сервера */
 .server-trigger {
   width: 100%;
   border-radius: 20px;
@@ -680,6 +700,8 @@ body.connected .power-glyph {
   align-items: center;
   gap: 12px;
   text-align: left;
+  min-width: 0;
+  flex: 1;
 }
 
 .flag-box {
@@ -692,17 +714,19 @@ body.connected .power-glyph {
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
 .flag-emoji {
-  font-size: 22px;
-  filter: grayscale(15%) contrast(1.05);
+  font-size: 21px;
 }
 
 .server-meta {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
+  flex: 1;
 }
 
 .server-title-row {
@@ -712,9 +736,12 @@ body.connected .power-glyph {
 }
 
 .server-country {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--nova);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .node-tag {
@@ -725,17 +752,23 @@ body.connected .power-glyph {
   background: rgba(255, 255, 255, 0.08);
   color: var(--starlight);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .server-city {
   font-size: 11px;
   color: var(--titanium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .server-right {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .ping-pill {
@@ -764,11 +797,17 @@ body.connected .power-glyph {
   width: 2px;
   background: var(--nova);
   border-radius: 1px;
+  transition: opacity 0.25s ease;
 }
 
 .signal-bars i:nth-child(1) { height: 4px; }
 .signal-bars i:nth-child(2) { height: 7px; }
 .signal-bars i:nth-child(3) { height: 10px; }
+
+.signal-bars.med i:nth-child(3) { opacity: 0.25; }
+.signal-bars.low i:nth-child(2),
+.signal-bars.low i:nth-child(3) { opacity: 0.25; }
+.signal-bars.dead i { opacity: 0.2; }
 
 .chevron-icon {
   width: 17px;
@@ -776,16 +815,16 @@ body.connected .power-glyph {
   color: var(--titanium);
 }
 
-/* === ВЫДВИЖНАЯ ШТОРКА ЛОКАЦИЙ === */
+/* === ШТОРКА СЕРВЕРОВ И ПОДПИСОК (HAPP STYLE) === */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.76);
+  background: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.32s ease;
   z-index: 10;
 }
 
@@ -804,9 +843,9 @@ body.connected .power-glyph {
   background: linear-gradient(180deg, #131318 0%, #09090c 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 28px 28px 0 0;
-  padding: 12px 20px calc(26px + env(safe-area-inset-bottom));
+  padding: 12px 18px calc(24px + env(safe-area-inset-bottom));
   box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 11;
 }
 
@@ -819,27 +858,71 @@ body.connected .power-glyph {
   height: 4px;
   border-radius: 99px;
   background: rgba(255, 255, 255, 0.22);
-  margin: 0 auto 16px;
+  margin: 0 auto 14px;
 }
 
 .sheet-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .sheet-top h2 {
   font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 1.5px;
+  font-size: 11.5px;
+  letter-spacing: 1.3px;
   color: var(--nova);
 }
 
 .sheet-top p {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--titanium);
   margin-top: 3px;
+}
+
+.sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-action-btn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-subtle);
+  color: var(--starlight);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.icon-action-btn:active {
+  transform: scale(0.93);
+}
+
+.icon-action-btn.primary {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: var(--nova);
+  font-size: 14px;
+}
+
+.icon-action-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.icon-action-btn.spinning svg {
+  animation: rotateSlow 0.9s linear infinite;
 }
 
 .sheet-close {
@@ -851,42 +934,298 @@ body.connected .power-glyph {
   color: var(--starlight);
   font-size: 13px;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Карточка подписки (Happ-style) */
+.sub-info-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 11px 14px;
+  margin-bottom: 12px;
+}
+
+.sub-info-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.sub-title-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sub-badge {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--nova);
+  color: var(--void);
+}
+
+.sub-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nova);
+}
+
+.sub-delete-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--titanium);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.sub-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--starlight);
 }
 
 .server-list {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  max-height: 54dvh;
+  gap: 8px;
+  max-height: 50dvh;
   overflow-y: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 28px 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.empty-state p {
+  font-size: 12.5px;
+  color: var(--titanium);
+  margin-bottom: 14px;
+  line-height: 1.5;
 }
 
 .server-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 11px 12px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-subtle);
   color: var(--nova);
   cursor: pointer;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: itemSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: calc(var(--i, 0) * 0.045s);
-  transition: border-color 0.25s ease, background 0.25s ease;
-}
-
-@keyframes itemSlideIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  gap: 8px;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .server-option.active {
   border-color: rgba(255, 255, 255, 0.65);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0.03) 100%);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.server-opt-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.mini-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--starlight);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mini-btn:active {
+  transform: scale(0.9);
+  border-color: var(--nova);
+}
+
+/* === МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ КЛЮЧА === */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 20;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.add-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -46%) scale(0.95);
+  width: calc(100% - 36px);
+  max-width: 400px;
+  background: linear-gradient(180deg, #16161c 0%, #0b0b0f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  z-index: 21;
+}
+
+.add-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 1.4px;
+  color: var(--nova);
+}
+
+.modal-header p {
+  font-size: 11px;
+  color: var(--titanium);
+  margin-top: 4px;
+}
+
+.clipboard-btn {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: var(--nova);
+  color: var(--void);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.clipboard-btn:active {
+  transform: scale(0.97);
+}
+
+.clipboard-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-divider {
+  text-align: center;
+  margin: 14px 0;
+  position: relative;
+}
+
+.modal-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-divider span {
+  position: relative;
+  background: #111116;
+  padding: 0 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--titanium);
+}
+
+.key-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px;
+  color: var(--nova);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  resize: none;
+  outline: none;
+  user-select: text;
+  transition: border-color 0.25s ease;
+}
+
+.key-input:focus {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.modal-status {
+  min-height: 18px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--starlight);
+  text-align: center;
+}
+
+.confirm-add-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--nova);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.confirm-add-btn:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.16);
 }
