@@ -1,4 +1,16 @@
-/* === 1. МНОГОСЛОЙНЫЙ КОСМИЧЕСКИЙ ДВИЖОК (ЗВЁЗДЫ, ЧАСТИЦЫ, КОМЕТЫ, РЯБЬ) === */
+/* === 1. КОНФИГУРАЦИЯ CLOUDFLARE WARP ПО УМОЛЧАНИЮ === */
+const DEFAULT_WARP_CONFIG = `[Interface]
+PrivateKey = 2FIDuRI098qwNUQ8gRsxPJosU8MiRnTFoJrKfqVquWQ=
+Address = 172.16.0.2/32, 2606:4700:110:86e5:46de:6cb7:bde:2bd3/128
+DNS = 1.1.1.1, 1.0.0.1, 2606:4700:4700::1111, 2606:4700:4700::1001
+MTU = 1280
+
+[Peer]
+PublicKey = bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = engage.cloudflareclient.com:2408`;
+
+/* === 2. МНОГОСЛОЙНЫЙ КОСМИЧЕСКИЙ ДВИЖОК === */
 const spaceCanvas = document.getElementById('spaceCanvas');
 const sCtx = spaceCanvas.getContext('2d');
 
@@ -27,7 +39,7 @@ function initSpace() {
 
   const count = Math.floor((w * h) / 4200);
   for (let i = 0; i < count; i++) {
-    const depth = Math.random(); // 0 = далеко, 1 = близко
+    const depth = Math.random();
     stars.push({
       x: Math.random() * w,
       y: Math.random() * h,
@@ -63,7 +75,6 @@ function spawnMeteor() {
   });
 }
 
-// Интерактивная гравитационная волна при касании экрана
 window.addEventListener('pointerdown', (e) => {
   touchRipples.push({
     x: e.clientX,
@@ -77,7 +88,6 @@ function renderSpace() {
   sCtx.clearRect(0, 0, w, h);
   warpSpeed += (targetWarpSpeed - warpSpeed) * 0.045;
 
-  // 1. Мерцающие звёзды
   for (let i = 0; i < stars.length; i++) {
     const s = stars[i];
     s.phase += s.twinkle;
@@ -94,7 +104,6 @@ function renderSpace() {
     sCtx.fillStyle = `rgba(255, 255, 255, ${a.toFixed(3)})`;
     sCtx.fill();
 
-    // Варп-шлейф при активном туннеле
     if (warpSpeed > 2.4 && s.r > 0.85) {
       sCtx.beginPath();
       sCtx.moveTo(s.x, s.y);
@@ -105,7 +114,6 @@ function renderSpace() {
     }
   }
 
-  // 2. Дрейфующие частицы и созвездия
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i];
     p.x += p.vx * (0.8 + warpSpeed * 0.25);
@@ -140,7 +148,6 @@ function renderSpace() {
     }
   }
 
-  // 3. Редкие падающие звёзды
   if (Math.random() < 0.008) spawnMeteor();
   for (let i = meteors.length - 1; i >= 0; i--) {
     const m = meteors[i];
@@ -165,7 +172,6 @@ function renderSpace() {
     sCtx.stroke();
   }
 
-  // 4. Световая рябь от касаний
   for (let i = touchRipples.length - 1; i >= 0; i--) {
     const r = touchRipples[i];
     r.radius += 2.6;
@@ -192,7 +198,7 @@ window.addEventListener('resize', () => {
 initSpace();
 renderSpace();
 
-/* === 2. ОСЦИЛЛОГРАФ ПОТОКА ТРАФИКА === */
+/* === 3. ОСЦИЛЛОГРАФ ПОТОКА ТРАФИКА === */
 const waveCanvas = document.getElementById('trafficWave');
 const wCtx = waveCanvas.getContext('2d');
 let wavePhase = 0;
@@ -217,7 +223,6 @@ function renderWave() {
 
   const midY = height / 2;
 
-  // Основная белая волна
   wCtx.beginPath();
   for (let x = 0; x <= width; x += 3) {
     const envelope = Math.sin((x / width) * Math.PI);
@@ -231,7 +236,6 @@ function renderWave() {
   wCtx.lineWidth = 1.3;
   wCtx.stroke();
 
-  // Вторая эхо-волна
   wCtx.beginPath();
   for (let x = 0; x <= width; x += 4) {
     const envelope = Math.sin((x / width) * Math.PI);
@@ -249,7 +253,7 @@ function renderWave() {
 resizeWaveCanvas();
 renderWave();
 
-/* === 3. ЭФФЕКТ ДЕШИФРОВКИ ТЕКСТА (SCRAMBLE) === */
+/* === 4. ЭФФЕКТ ДЕШИФРОВКИ ТЕКСТА === */
 const CIPHER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%*+';
 
 function scrambleText(element, finalText, duration = 420) {
@@ -282,17 +286,51 @@ function scrambleText(element, finalText, duration = 420) {
   requestAnimationFrame(update);
 }
 
-/* === 4. ЛОГИКА DISFACTORY VPN === */
-const protocols = ['VLESS • REALITY', 'HYSTERIA 2', 'WIREGUARD • X'];
+/* === 5. ЛОГИКА DISFACTORY VPN И РЕАЛЬНЫЙ МОСТ WIREGUARD === */
+const protocols = ['WIREGUARD • WARP', 'VLESS • REALITY', 'HYSTERIA 2'];
 let protocolIndex = 0;
 
 const servers = [
-  { id: 'nl', tag: 'NL-01', flag: '🇳🇱', country: 'Нидерланды', city: 'Амстердам • Квантовый шлюз', ping: 24, ip: '94.142.241.19' },
-  { id: 'fi', tag: 'FI-02', flag: '🇫🇮', country: 'Финляндия', city: 'Хельсинки • Северный узел', ping: 19, ip: '95.216.14.202' },
-  { id: 'de', tag: 'DE-03', flag: '🇩🇪', country: 'Германия', city: 'Франкфурт • Ядро Европы', ping: 31, ip: '185.11.61.84' },
-  { id: 'se', tag: 'SE-04', flag: '🇸🇪', country: 'Швеция', city: 'Стокгольм • Скандинавия', ping: 27, ip: '193.138.218.71' },
-  { id: 'us', tag: 'US-05', flag: '🇺🇸', country: 'США', city: 'Нью-Йорк • Трансатлантика', ping: 98, ip: '104.248.55.12' },
-  { id: 'jp', tag: 'JP-06', flag: '🇯🇵', country: 'Япония', city: 'Токио • Тихоокеанский луч', ping: 142, ip: '45.76.210.88' }
+  {
+    id: 'warp',
+    tag: 'WARP-01',
+    flag: '☁️',
+    country: 'Cloudflare WARP',
+    city: 'Anycast • Активный конфиг',
+    ping: 18,
+    ip: '172.16.0.2',
+    config: DEFAULT_WARP_CONFIG
+  },
+  {
+    id: 'nl',
+    tag: 'NL-01',
+    flag: '🇳🇱',
+    country: 'Нидерланды',
+    city: 'Амстердам • Требуется ключ',
+    ping: 24,
+    ip: '94.142.241.19',
+    config: null
+  },
+  {
+    id: 'fi',
+    tag: 'FI-02',
+    flag: '🇫🇮',
+    country: 'Финляндия',
+    city: 'Хельсинки • Требуется ключ',
+    ping: 19,
+    ip: '95.216.14.202',
+    config: null
+  },
+  {
+    id: 'de',
+    tag: 'DE-03',
+    flag: '🇩🇪',
+    country: 'Германия',
+    city: 'Франкфурт • Требуется ключ',
+    ping: 31,
+    ip: '185.11.61.84',
+    config: null
+  }
 ];
 
 let state = 'disconnected';
@@ -320,6 +358,12 @@ const closeSheetBtn = document.getElementById('closeSheetBtn');
 const sheetOverlay = document.getElementById('sheetOverlay');
 const bottomSheet = document.getElementById('bottomSheet');
 const serverListEl = document.getElementById('serverList');
+
+function getNativeVpnPlugin() {
+  return window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.DisfactoryVpn
+    ? window.Capacitor.Plugins.DisfactoryVpn
+    : null;
+}
 
 function vibrate(pattern = 25) {
   if (navigator.vibrate) navigator.vibrate(pattern);
@@ -366,37 +410,70 @@ function stopTelemetry() {
   targetWaveAmplitude = 1.5;
 }
 
-function setDisconnected() {
+async function setDisconnected(customHint = 'Коснитесь ядра для запуска WARP') {
   clearTimeout(connectTimeout);
   state = 'disconnected';
   body.className = '';
   targetWarpSpeed = 1;
   scrambleText(statusText, 'ОЖИДАНИЕ КАНАЛА', 350);
-  scrambleText(ipLabel, '185.220.101.4 • UNSECURED', 400);
-  powerHint.textContent = 'Коснитесь ядра для шифрования';
+  scrambleText(ipLabel, `${selectedServer.ip} • STANDBY`, 400);
+  powerHint.textContent = customHint;
   stopTelemetry();
+
+  const vpnPlugin = getNativeVpnPlugin();
+  if (vpnPlugin) {
+    try {
+      await vpnPlugin.disconnect();
+    } catch (e) {
+      console.warn('Disconnect error:', e);
+    }
+  }
 }
 
-function startConnecting() {
+function applyConnectedUI() {
+  state = 'connected';
+  body.className = 'connected';
+  targetWarpSpeed = 6.2;
+  scrambleText(statusText, 'ТУННЕЛЬ ЗАЩИЩЁН', 420);
+  scrambleText(ipLabel, `${selectedServer.ip} • ${selectedServer.tag}`, 480);
+  powerHint.textContent = 'Шифрование активно • Нажмите для разрыва';
+  fireShockwaves();
+  vibrate([25, 45, 35]);
+  startTelemetry();
+}
+
+async function startConnecting() {
   clearTimeout(connectTimeout);
+
+  if (!selectedServer.config) {
+    vibrate([40, 40]);
+    powerHint.textContent = 'Для этой локации ещё не добавлен ключ';
+    return;
+  }
+
   state = 'connecting';
   body.className = 'connecting';
   targetWarpSpeed = 3.2;
   targetWaveAmplitude = 4.5;
-  scrambleText(statusText, 'СИНХРОНИЗАЦИЯ...', 320);
-  powerHint.textContent = `Квантовый рукопожатие: ${selectedServer.tag}...`;
+  scrambleText(statusText, 'ПОДКЛЮЧЕНИЕ WARP...', 320);
+  powerHint.textContent = 'Запрос системного туннеля Android...';
 
-  connectTimeout = setTimeout(() => {
-    state = 'connected';
-    body.className = 'connected';
-    targetWarpSpeed = 6.2;
-    scrambleText(statusText, 'ТУННЕЛЬ ЗАЩИЩЁН', 420);
-    scrambleText(ipLabel, `${selectedServer.ip} • ${selectedServer.tag}`, 480);
-    powerHint.textContent = 'Шифрование активно • Нажмите для разрыва';
-    fireShockwaves();
-    vibrate([25, 45, 35]);
-    startTelemetry();
-  }, 1450);
+  const vpnPlugin = getNativeVpnPlugin();
+
+  if (vpnPlugin) {
+    try {
+      await vpnPlugin.connect({ config: selectedServer.config });
+      applyConnectedUI();
+    } catch (err) {
+      console.error('VPN connect failed:', err);
+      await setDisconnected('Не удалось поднять туннель (проверь разрешение VPN)');
+    }
+  } else {
+    // Режим предпросмотра в браузере / редакторе
+    connectTimeout = setTimeout(() => {
+      applyConnectedUI();
+    }, 1250);
+  }
 }
 
 powerBtn.addEventListener('click', () => {
@@ -409,14 +486,13 @@ powerBtn.addEventListener('click', () => {
   }
 });
 
-// Переключение протокола в шапке
 protocolBtn.addEventListener('click', () => {
   vibrate(15);
   protocolIndex = (protocolIndex + 1) % protocols.length;
   scrambleText(protocolLabel, protocols[protocolIndex], 280);
 });
 
-/* === 5. ШТОРКА ВЫБОРА УЗЛОВ === */
+/* === 6. ШТОРКА ВЫБОРА УЗЛОВ === */
 function renderServerList() {
   serverListEl.innerHTML = servers.map((srv, idx) => `
     <div class="server-option ${srv.id === selectedServer.id ? 'active' : ''}" data-id="${srv.id}" style="--i: ${idx}">
@@ -459,7 +535,7 @@ function renderServerList() {
         stopTelemetry();
         startConnecting();
       } else {
-        scrambleText(ipLabel, `185.220.101.4 • READY (${chosen.tag})`, 350);
+        scrambleText(ipLabel, `${chosen.ip} • READY (${chosen.tag})`, 350);
       }
     });
   });
