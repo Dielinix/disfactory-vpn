@@ -42,7 +42,7 @@ jobs:
           node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.disfactory.vpn",appName:"DISFACTORY VPN",webDir:"www",backgroundColor:"#020203"},null,2))'
           npx cap add android
 
-      - name: Add WireGuard native VPN bridge
+      - name: Add WireGuard native VPN bridge with real traffic stats
         run: |
           JAVA_DIR="android/app/src/main/java/com/disfactory/vpn"
           mkdir -p "$JAVA_DIR"
@@ -61,6 +61,7 @@ jobs:
           import com.getcapacitor.annotation.ActivityCallback;
           import com.getcapacitor.annotation.CapacitorPlugin;
           import com.wireguard.android.backend.GoBackend;
+          import com.wireguard.android.backend.Statistics;
           import com.wireguard.android.backend.Tunnel;
           import com.wireguard.config.Config;
           import java.io.BufferedReader;
@@ -145,6 +146,29 @@ jobs:
                           call.resolve(ret);
                       } catch (Exception e) {
                           call.reject("Disconnect error: " + e.getMessage());
+                      }
+                  });
+              }
+
+              @PluginMethod
+              public void getTrafficStats(PluginCall call) {
+                  executor.execute(() -> {
+                      try {
+                          long rxBytes = 0;
+                          long txBytes = 0;
+                          if (backend != null && tunnel != null) {
+                              Statistics stats = backend.getStatistics(tunnel);
+                              if (stats != null) {
+                                  rxBytes = stats.totalRx();
+                                  txBytes = stats.totalTx();
+                              }
+                          }
+                          JSObject ret = new JSObject();
+                          ret.put("rxBytes", rxBytes);
+                          ret.put("txBytes", txBytes);
+                          call.resolve(ret);
+                      } catch (Exception e) {
+                          call.reject("Stats error: " + e.getMessage());
                       }
                   });
               }
