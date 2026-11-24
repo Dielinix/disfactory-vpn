@@ -10,14 +10,12 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Космический холст и атмосферные слои -->
   <canvas id="spaceCanvas"></canvas>
   <div class="cosmic-vignette"></div>
   <div class="nebula-core" id="nebulaCore"></div>
   <div class="nebula-halo"></div>
 
   <main class="app">
-    <!-- Верхняя панель -->
     <header class="header anim-stagger" style="--stagger: 1">
       <div class="brand">
         <div class="brand-emblem">
@@ -30,13 +28,12 @@
         </div>
       </div>
 
-      <button class="protocol-pill" id="protocolBtn" title="Сменить протокол">
+      <button class="protocol-pill" id="protocolBtn" title="Протокол туннеля">
         <span class="protocol-dot"></span>
-        <span id="protocolLabel">VLESS • REALITY</span>
+        <span id="protocolLabel">WIREGUARD • WARP</span>
       </button>
     </header>
 
-    <!-- Блок статуса и таймера -->
     <section class="telemetry-header anim-stagger" style="--stagger: 2">
       <div class="status-badge" id="statusBadge">
         <span class="status-pulse"></span>
@@ -49,40 +46,31 @@
 
       <div class="ip-chip">
         <span class="ip-prefix">NODE</span>
-        <span class="ip-value" id="ipLabel">185.220.101.4 • UNSECURED</span>
+        <span class="ip-value" id="ipLabel">172.16.0.2 • WARP STANDBY</span>
       </div>
     </section>
 
-    <!-- Центральный орбитальный реактор -->
     <section class="reactor-stage anim-stagger" style="--stagger: 3">
       <div class="reactor" id="reactor">
-        <!-- Двойная ударная волна -->
         <div class="shockwave wave-1" id="wave1"></div>
         <div class="shockwave wave-2" id="wave2"></div>
-
-        <!-- Радарный луч при подключении -->
         <div class="radar-sweep"></div>
 
-        <!-- Внешняя градуированная шкала -->
         <svg class="reactor-svg outer-scale" viewBox="0 0 260 260">
           <circle cx="130" cy="130" r="124" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1 7" />
           <circle cx="130" cy="130" r="116" fill="none" stroke="currentColor" stroke-width="0.75" stroke-dasharray="40 20 8 20" opacity="0.5" />
         </svg>
 
-        <!-- Эллиптическая орбита -->
         <div class="ellipse-orbit"></div>
 
-        <!-- Среднее кольцо со спутником -->
         <div class="orbit-track track-mid">
           <span class="orbiter orbiter-alpha"></span>
         </div>
 
-        <!-- Внутреннее кольцо со спутником -->
         <div class="orbit-track track-inner">
           <span class="orbiter orbiter-beta"></span>
         </div>
 
-        <!-- Металлическая стеклянная кнопка питания -->
         <button class="power-core" id="powerBtn" aria-label="Активировать DISFACTORY VPN">
           <span class="core-rim"></span>
           <span class="core-specular"></span>
@@ -93,12 +81,10 @@
         </button>
       </div>
 
-      <p class="reactor-hint" id="powerHint">Коснитесь ядра для шифрования</p>
+      <p class="reactor-hint" id="powerHint">Коснитесь ядра для запуска WARP</p>
     </section>
 
-    <!-- Нижний кластер: Телеметрия + Локация -->
     <div class="bottom-cluster">
-      <!-- Карточка скорости с живой волной -->
       <section class="glass-panel telemetry-panel anim-stagger" style="--stagger: 4">
         <div class="speed-columns">
           <div class="speed-item">
@@ -126,24 +112,22 @@
           </div>
         </div>
 
-        <!-- Живой осциллограф трафика -->
         <div class="wave-container">
           <canvas id="trafficWave"></canvas>
         </div>
       </section>
 
-      <!-- Кнопка выбора орбитального узла -->
       <button class="glass-panel server-trigger anim-stagger" style="--stagger: 5" id="openServersBtn">
         <div class="server-left">
           <div class="flag-box">
-            <span class="flag-emoji" id="currentFlag">🇳🇱</span>
+            <span class="flag-emoji" id="currentFlag">☁️</span>
           </div>
           <div class="server-meta">
             <div class="server-title-row">
-              <span class="server-country" id="currentCountry">Нидерланды</span>
-              <span class="node-tag" id="currentNodeTag">NL-01</span>
+              <span class="server-country" id="currentCountry">Cloudflare WARP</span>
+              <span class="node-tag" id="currentNodeTag">WARP-01</span>
             </div>
-            <span class="server-city" id="currentCity">Амстердам • Квантовый шлюз</span>
+            <span class="server-city" id="currentCity">Anycast • Автовыбор шлюза</span>
           </div>
         </div>
 
@@ -152,7 +136,7 @@
             <span class="signal-bars">
               <i></i><i></i><i></i>
             </span>
-            <span id="currentPing">24 ms</span>
+            <span id="currentPing">18 ms</span>
           </div>
           <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -162,7 +146,6 @@
     </div>
   </main>
 
-  <!-- Выдвижная шторка выбора локации -->
   <div class="sheet-backdrop" id="sheetOverlay"></div>
   <aside class="location-sheet" id="bottomSheet">
     <div class="sheet-drag-bar"></div>
