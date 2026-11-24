@@ -24,10 +24,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare web assets
+      - name: Prepare web assets and app icon
         run: |
-          mkdir -p www
+          mkdir -p www assets
           cp index.html style.css app.js www/
+          SRC_ICON=""
+          if [ -f "icon.png" ]; then SRC_ICON="icon.png"; elif [ -f "icon.jpg" ]; then SRC_ICON="icon.jpg"; fi
+          if [ -n "$SRC_ICON" ]; then
+            sudo apt-get update && sudo apt-get install -y python3-pil
+            python3 -c "from PIL import Image; img = Image.open('$SRC_ICON').convert('RGBA').resize((1024, 1024)); img.save('assets/logo.png'); img.save('assets/icon-only.png')"
+          fi
 
       - name: Initialize Capacitor and Android platform
         run: |
@@ -35,6 +41,151 @@ jobs:
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.disfactory.vpn",appName:"DISFACTORY VPN",webDir:"www",backgroundColor:"#020203"},null,2))'
           npx cap add android
+
+      - name: Add WireGuard native VPN bridge
+        run: |
+          JAVA_DIR="android/app/src/main/java/com/disfactory/vpn"
+          mkdir -p "$JAVA_DIR"
+
+          cat << 'EOF' > "$JAVA_DIR/DisfactoryVpnPlugin.java"
+          package com.disfactory.vpn;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.net.VpnService;
+          import androidx.activity.result.ActivityResult;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.ActivityCallback;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import com.wireguard.android.backend.GoBackend;
+          import com.wireguard.android.backend.Tunnel;
+          import com.wireguard.config.Config;
+          import java.io.BufferedReader;
+          import java.io.StringReader;
+          import java.util.concurrent.ExecutorService;
+          import java.util.concurrent.Executors;
+
+          @CapacitorPlugin(name = "DisfactoryVpn")
+          public class DisfactoryVpnPlugin extends Plugin {
+              private GoBackend backend;
+              private Tunnel tunnel;
+              private String pendingConfig;
+              private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+              @Override
+              public void load() {
+                  backend = new GoBackend(getContext());
+                  tunnel = new Tunnel() {
+                      @Override
+                      public String getName() {
+                          return "disfactory_warp";
+                      }
+
+                      @Override
+                      public void onStateChange(State newState) {
+                          JSObject data = new JSObject();
+                          data.put("state", newState.name());
+                          notifyListeners("vpnStateChange", data);
+                      }
+                  };
+              }
+
+              @PluginMethod
+              public void connect(PluginCall call) {
+                  String configText = call.getString("config");
+                  if (configText == null || configText.trim().isEmpty()) {
+                      call.reject("Missing WireGuard config");
+                      return;
+                  }
+                  pendingConfig = configText;
+
+                  Intent vpnIntent = VpnService.prepare(getContext());
+                  if (vpnIntent != null) {
+                      startActivityForResult(call, vpnIntent, "onVpnPermissionResult");
+                  } else {
+                      startTunnel(call);
+                  }
+              }
+
+              @ActivityCallback
+              private void onVpnPermissionResult(PluginCall call, ActivityResult result) {
+                  if (result.getResultCode() == Activity.RESULT_OK) {
+                      startTunnel(call);
+                  } else {
+                      call.reject("VPN permission denied");
+                  }
+              }
+
+              private void startTunnel(PluginCall call) {
+                  executor.execute(() -> {
+                      try {
+                          Config wgConfig = Config.parse(new BufferedReader(new StringReader(pendingConfig)));
+                          backend.setState(tunnel, Tunnel.State.UP, wgConfig);
+                          JSObject ret = new JSObject();
+                          ret.put("connected", true);
+                          call.resolve(ret);
+                      } catch (Exception e) {
+                          call.reject("Tunnel error: " + e.getMessage());
+                      }
+                  });
+              }
+
+              @PluginMethod
+              public void disconnect(PluginCall call) {
+                  executor.execute(() -> {
+                      try {
+                          if (backend != null && tunnel != null) {
+                              backend.setState(tunnel, Tunnel.State.DOWN, null);
+                          }
+                          JSObject ret = new JSObject();
+                          ret.put("connected", false);
+                          call.resolve(ret);
+                      } catch (Exception e) {
+                          call.reject("Disconnect error: " + e.getMessage());
+                      }
+                  });
+              }
+          }
+          EOF
+
+          cat << 'EOF' > "$JAVA_DIR/MainActivity.java"
+          package com.disfactory.vpn;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(DisfactoryVpnPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
+
+          cat << 'EOF' >> android/app/build.gradle
+
+          android {
+              compileOptions {
+                  coreLibraryDesugaringEnabled true
+              }
+          }
+
+          dependencies {
+              coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+              implementation 'com.wireguard.android:tunnel:1.0.20230706'
+          }
+          EOF
+
+      - name: Generate Android icons
+        run: |
+          if [ -f "assets/logo.png" ]; then
+            npm install @capacitor/assets
+            npx capacitor-assets generate --android --iconBackgroundColor '#020203'
+          fi
 
       - name: Build Debug APK
         run: |
